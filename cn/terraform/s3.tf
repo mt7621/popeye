@@ -1,10 +1,10 @@
 resource "aws_s3_bucket" "static_s3_bucket" {
-  bucket = "wsc2024-s3-static-hyun"
+  bucket = "wsc2024-s3-static-3333"
 
   force_destroy = true
 
   tags = {
-    Name = "wsc2024-s3-static-hyun"
+    Name = "wsc2024-s3-static-3333"
   }
 }
 
