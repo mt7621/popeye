@@ -4,26 +4,13 @@ metadata:
   name: aws-logging
   namespace: aws-observability
 data:
-  flb_log_cw: "false"  # Set to true to ship Fluent Bit process logs to CloudWatch.
-  filters.conf: |
-    [FILTER]
-        Name parser
-        Match *
-        Key_name log
-        Parser crio
-    [FILTER]
-        Name kubernetes
-        Match kube.*
-        Merge_Log On
-        Keep_Log Off
-        Buffer_Size 0
-        Kube_Meta_Cache_TTL 300s
+  flb_log_cw: "false"
   output.conf: |
     [OUTPUT]
         Name cloudwatch_logs
-        Match   *
+        Match   kube.*
         region ap-northeast-2
-        log_group_name /aws/eks/fargate/app
+        log_group_name /wsi/webapp/order
         log_stream_prefix fluent-bit-
         log_retention_days 60
         auto_create_group true

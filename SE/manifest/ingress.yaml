@@ -6,10 +6,16 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/load-balancer-name: wsi-alb
     alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/subnets: subnet-0ce7249ff1bad85f7,subnet-032376d8ee971af4b
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/subnets: subnet-016b646469fb1cb2f, subnet-03a4ec4e5c070ebd5
     alb.ingress.kubernetes.io/target-type: ip
-
+    alb.ingress.kubernetes.io/healthcheck-path: /healthcheck
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "5"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "2"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=0
+    alb.ingress.kubernetes.io/security-groups: sg-0d80d373e5720a61d
+    alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
 spec:
   ingressClassName: alb
   rules:
@@ -21,19 +27,19 @@ spec:
           service:
             name: product
             port:
-              number: 8080
+              number: 80
       - path: /v1/customer
         pathType: Prefix
         backend:
           service:
             name: customer
             port:
-              number: 8080
+              number: 80
       - path: /v1/order
         pathType: Prefix
         backend:
           service:
             name: order
             port:
-              number: 8080
+              number: 80
 

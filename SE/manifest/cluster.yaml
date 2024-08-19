@@ -10,18 +10,28 @@ vpc:
   subnets:
     private:
       ap-northeast-2a:
-        id: subnet-09a6a3e9de17abee8
+        id: subnet-02380ffe249301dec
       ap-northeast-2b:
-        id: subnet-0932cabf9743f0873
+        id: subnet-09ee2126b0bc070f0
   clusterEndpoints:
     privateAccess: true
     publicAccess: false
 
 secretsEncryption:
-  keyARN: ${EKS_KMS_KEY}
+  keyARN: arn:aws:kms:ap-northeast-2:702661606257:key/01d0a126-c38f-49eb-a98c-c95e3af0b042
+
+fargateProfiles:
+  - name: wsi-app-fargate
+    selectors:
+      - namespace: wsi
+        labels:
+          app: order
+    podExecutionRoleARN: arn:aws:iam::702661606257:role/fargatePodExecutionRole
 
 managedNodeGroups:
   - name: wsi-app-nodegroup
+    updateConfig:
+      maxUnavailable: 1
     labels:
       nodeType: app
     amiFamily: Bottlerocket
@@ -40,6 +50,8 @@ managedNodeGroups:
       withAddonPolicies:
         imageBuilder: true
   - name: wsi-addon-nodegroup
+    updateConfig:
+      maxUnavailable: 1
     labels:
       nodeType: addon
     amiFamily: Bottlerocket
@@ -53,13 +65,17 @@ managedNodeGroups:
     iam:
       withAddonPolicies:
         imageBuilder: true
-
-fargateProfiles:
-  - name: wsi-app-fargate
-    selectors:
-      - namespace: wsi
-        labels:
-          app: order
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        appMeshPreview: true
+        ebs: true
+        fsx: true
+        efs: true
+        awsLoadBalancerController: true
+        xRay: true
+        cloudWatch: true
 
 iam:
   withOIDC: true
@@ -69,6 +85,11 @@ iam:
         namespace: kube-system
       wellKnownPolicies:
         awsLoadBalancerController: true
+    - metadata:
+        name: fluent-bit
+        namespace: logging
+      attachPolicyARNs:
+      - "arn:aws:iam::aws:policy/CloudWatchFullAccess"
 
 cloudWatch:
   clusterLogging:
@@ -80,3 +101,9 @@ addons:
     attachPolicyARNs:
       - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
     resolveConflicts: overwrite
+  - name: amazon-cloudwatch-observability
+    version: latest
+    tags:
+      team: eks
+    resolveConflicts: overwrite
+

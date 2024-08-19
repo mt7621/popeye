@@ -52,4 +52,6 @@ lattice배포순서(gatewayclass -> gateway -> routepolicy -> route)
 
 - rds 테이블 생성
 
-- cloudfront alb 연결
+- cloudfront alb 연제
+
+- vpc lattice에 prod vpc연결해제

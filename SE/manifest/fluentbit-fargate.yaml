@@ -1,3 +1,12 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: aws-observability
+  labels:
+    aws-observability: enabled
+
+---
+
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -7,17 +16,10 @@ data:
   flb_log_cw: "true"  # Set to true to ship Fluent Bit process logs to CloudWatch.
   filters.conf: |
     [FILTER]
-        Name parser
+        Name grep
         Match *
-        Key_name log
-        Parser crio
-    [FILTER]
-        Name kubernetes
-        Match kube.*
-        Merge_Log On
-        Keep_Log Off
-        Buffer_Size 0
-        Kube_Meta_Cache_TTL 300s
+        Exclude log /healthcheck
+
   output.conf: |
     [OUTPUT]
         Name cloudwatch_logs
@@ -27,10 +29,3 @@ data:
         log_stream_prefix from-fluent-bit-
         log_retention_days 60
         auto_create_group true
-  parsers.conf: |
-    [PARSER]
-        Name crio
-        Format Regex
-        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>P|F) (?<log>.*)$
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
