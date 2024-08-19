@@ -1,0 +1,506 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  MaVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-vpc
+
+  MaSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref MaVPC
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-mgmt-sn-a
+
+  MaSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b
+      VpcId: !Ref MaVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-mgmt-sn-b
+
+  Maigw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-igw
+
+  MaigwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MaVPC
+      InternetGatewayId: !Ref Maigw
+
+  MaRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MaVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-mgmt-rt
+
+  MaSubnetAMaRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref MaRouteTable
+      SubnetId: !Ref MaSubnetA
+
+  MaSubnetBMaRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref MaRouteTable
+      SubnetId: !Ref MaSubnetB
+
+  MaRouteTableRoute:
+    Type: AWS::EC2::Route
+    DependsOn: Maigw
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Maigw
+      RouteTableId: !Ref MaRouteTable
+
+  ProdVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.16.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-vpc
+
+  ProdLoadSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref ProdVPC
+      CidrBlock: 172.16.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-load-sn-a
+
+  ProdLoadSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b
+      VpcId: !Ref ProdVPC
+      CidrBlock: 172.16.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-load-sn-b
+
+  ProdAppSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref ProdVPC
+      CidrBlock: 172.16.2.0/24
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-app-sn-a
+
+  ProdAppSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b
+      VpcId: !Ref ProdVPC
+      CidrBlock: 172.16.3.0/24
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-app-sn-b
+
+  Prodigw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-igw
+
+  ProdigwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref ProdVPC
+      InternetGatewayId: !Ref Prodigw
+
+  ProdLoadRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-load-rt
+
+  ProdLoadSubnetAProdLoadRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ProdLoadRouteTable
+      SubnetId: !Ref ProdLoadSubnetA
+
+  ProdLoadSubnetBProdLoadRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ProdLoadRouteTable
+      SubnetId: !Ref ProdLoadSubnetB
+
+  ProdLoadRouteTableRoute:
+    Type: AWS::EC2::Route
+    DependsOn: Prodigw
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Prodigw
+      RouteTableId: !Ref ProdLoadRouteTable
+
+  ProdAppNatAEIP:
+   Type: AWS::EC2::EIP
+   Properties:
+      Domain: vpc
+      
+  ProdNatA:
+   Type: AWS::EC2::NatGateway
+   Properties:
+      AllocationId: !GetAtt ProdAppNatAEIP.AllocationId
+      SubnetId: !Ref ProdLoadSubnetA
+      Tags:
+      - Key: Name
+        Value: wsc2024-prod-natgw-a
+    
+  ProdAppRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-app-rt-a
+        
+  ProdAppRouteTableAAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ProdAppRouteTableA
+      SubnetId: !Ref ProdAppSubnetA
+
+  ProdAppRouteTableARoute:
+   Type: AWS::EC2::Route
+   Properties:
+      RouteTableId: !Ref ProdAppRouteTableA
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref ProdNatA
+  
+  ProdAppNatBEIP:
+   Type: AWS::EC2::EIP
+   Properties:
+      Domain: vpc
+      
+  ProdNatB:
+   Type: AWS::EC2::NatGateway
+   Properties:
+      AllocationId: !GetAtt ProdAppNatBEIP.AllocationId
+      SubnetId: !Ref ProdLoadSubnetB
+      Tags:
+      - Key: Name
+        Value: wsc2024-prod-natgw-b
+    
+  ProdAppRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-app-rt-b
+        
+  ProdAppRouteTableBAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref ProdAppRouteTableB
+      SubnetId: !Ref ProdAppSubnetB
+
+  ProdAppRouteTableBRoute:
+   Type: AWS::EC2::Route
+   Properties:
+      RouteTableId: !Ref ProdAppRouteTableB
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref ProdNatB
+
+  StorageVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-vpc
+
+  StorageSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1a
+      VpcId: !Ref StorageVPC
+      CidrBlock: 192.168.0.0/24
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-db-sn-a
+
+  StorageSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: us-east-1b
+      VpcId: !Ref StorageVPC
+      CidrBlock: 192.168.1.0/24
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-db-sn-b
+
+  StorageRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref StorageVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-db-rt-a
+        
+  StorageRouteTableAAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref StorageRouteTableA
+      SubnetId: !Ref StorageSubnetA
+
+  StorageRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref StorageVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-db-rt-b
+        
+  StorageRouteTableBAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref StorageRouteTableB
+      SubnetId: !Ref StorageSubnetB
+
+  TransitGateway:
+    Type: "AWS::EC2::TransitGateway"
+    Properties:
+      AmazonSideAsn: 65000
+      Description: "wsc2024-vpc-tgw"
+      AutoAcceptSharedAttachments: "disable"
+      DefaultRouteTableAssociation: "disable"
+      DefaultRouteTablePropagation: "disable"
+      DnsSupport: "enable"
+      VpnEcmpSupport: "enable"
+      Tags:
+      - Key: Name
+        Value: wsc2024-vpc-tgw
+  
+  MaTGWAttachment:
+    Type: 'AWS::EC2::TransitGatewayAttachment'
+    Properties:
+      SubnetIds:
+        - !Ref MaSubnetA
+        - !Ref MaSubnetB
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref MaVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-tgw-attach
+
+  ProdTGWAttachment:
+    Type: 'AWS::EC2::TransitGatewayAttachment'
+    Properties:
+      SubnetIds:
+        - !Ref ProdAppSubnetA
+        - !Ref ProdAppSubnetB
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref ProdVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-tgw-attach
+
+  StorageTGWAttachment:
+    Type: 'AWS::EC2::TransitGatewayAttachment'
+    Properties:
+      SubnetIds:
+        - !Ref StorageSubnetA
+        - !Ref StorageSubnetB
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref StorageVPC
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-tgw-attach
+  
+  MaTGWRouteTable:
+    Type: "AWS::EC2::TransitGatewayRouteTable"
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      Tags:
+        - Key: Name
+          Value: wsc2024-ma-tgw-rt
+
+  ProdTGWRouteTable:
+    Type: "AWS::EC2::TransitGatewayRouteTable"
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      Tags:
+        - Key: Name
+          Value: wsc2024-prod-tgw-rt
+    
+  StorageTGWRouteTable:
+    Type: "AWS::EC2::TransitGatewayRouteTable"
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      Tags:
+        - Key: Name
+          Value: wsc2024-storage-tgw-rt
+
+  MaRouteTableMaTGWAttachmentRoute:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref MaTGWAttachment
+      TransitGatewayRouteTableId: !Ref MaTGWRouteTable
+
+  ProdRouteTableProdTGWAttachmentRoute:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref ProdTGWAttachment
+      TransitGatewayRouteTableId: !Ref ProdTGWRouteTable
+
+  StorageRouteTableStorageTGWAttachmentRoute:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref StorageTGWAttachment
+      TransitGatewayRouteTableId: !Ref StorageTGWRouteTable
+
+  MaTGWRouteTableProdPropagation:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref ProdTGWAttachment
+      TransitGatewayRouteTableId: !Ref MaTGWRouteTable
+
+  MaTGWRouteTableStoragePropagation:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref StorageTGWAttachment
+      TransitGatewayRouteTableId: !Ref MaTGWRouteTable
+
+  ProdTGWRouteTableMaPropagation:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref MaTGWAttachment
+      TransitGatewayRouteTableId: !Ref ProdTGWRouteTable
+
+  ProdTGWRouteTableStoragePropagation:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref StorageTGWAttachment
+      TransitGatewayRouteTableId: !Ref ProdTGWRouteTable
+
+  StorageTGWRouteTableMaPropagation:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref MaTGWAttachment
+      TransitGatewayRouteTableId: !Ref StorageTGWRouteTable
+
+  StorageTGWRouteTableProdPropagation:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref ProdTGWAttachment
+      TransitGatewayRouteTableId: !Ref StorageTGWRouteTable
+  
+  MaRouteTableProdTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: ProdTGWAttachment
+    Properties:
+      RouteTableId: !Ref MaRouteTable
+      DestinationCidrBlock: 172.16.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  MaRouteTableStorageTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: StorageTGWAttachment
+    Properties:
+      RouteTableId: !Ref MaRouteTable
+      DestinationCidrBlock: 192.168.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  ProdAppRouteTableAMaTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: MaTGWAttachment
+    Properties:
+      RouteTableId: !Ref ProdAppRouteTableA
+      DestinationCidrBlock: 10.0.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  ProdAppRouteTableBMaTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: MaTGWAttachment
+    Properties:
+      RouteTableId: !Ref ProdAppRouteTableB
+      DestinationCidrBlock: 10.0.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+  
+  ProdAppRouteTableAStorageTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: StorageTGWAttachment
+    Properties:
+      RouteTableId: !Ref ProdAppRouteTableA
+      DestinationCidrBlock: 192.168.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+  
+  ProdAppRouteTableBStorageTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: StorageTGWAttachment
+    Properties:
+      RouteTableId: !Ref ProdAppRouteTableB
+      DestinationCidrBlock: 192.168.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  StorageRouteTableAMaTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: MaTGWAttachment
+    Properties:
+      RouteTableId: !Ref StorageRouteTableA
+      DestinationCidrBlock: 10.0.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  StorageRouteTableBMaTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: MaTGWAttachment
+    Properties:
+      RouteTableId: !Ref StorageRouteTableB
+      DestinationCidrBlock: 10.0.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  StorageRouteTableAProdTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: ProdTGWAttachment
+    Properties:
+      RouteTableId: !Ref StorageRouteTableA
+      DestinationCidrBlock: 172.16.0.0/16
+      TransitGatewayId: !Ref TransitGateway
+
+  StorageRouteTableBProdTGWRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: ProdTGWAttachment
+    Properties:
+      RouteTableId: !Ref StorageRouteTableB
+      DestinationCidrBlock: 172.16.0.0/16
+      TransitGatewayId: !Ref TransitGateway

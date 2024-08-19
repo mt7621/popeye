@@ -1,0 +1,82 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: wsi-eks-cluster
+  region: ap-northeast-2
+  version: '1.29'
+
+vpc:
+  subnets:
+    private:
+      ap-northeast-2a:
+        id: subnet-09a6a3e9de17abee8
+      ap-northeast-2b:
+        id: subnet-0932cabf9743f0873
+  clusterEndpoints:
+    privateAccess: true
+    publicAccess: false
+
+secretsEncryption:
+  keyARN: ${EKS_KMS_KEY}
+
+managedNodeGroups:
+  - name: wsi-app-nodegroup
+    labels:
+      nodeType: app
+    amiFamily: Bottlerocket
+    instanceType: m5.xlarge
+    instanceName: wsi-app-node
+    minSize: 2
+    maxSize: 64
+    desiredCapacity: 2
+    volumeSize: 30
+    privateNetworking: true
+    taints:
+      - key: type
+        value: "app"
+        effect: NoSchedule
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+  - name: wsi-addon-nodegroup
+    labels:
+      nodeType: addon
+    amiFamily: Bottlerocket
+    instanceType: t4g.large
+    instanceName: wsi-addon-node
+    minSize: 2
+    maxSize: 64
+    desiredCapacity: 2
+    volumeSize: 30
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+
+fargateProfiles:
+  - name: wsi-app-fargate
+    selectors:
+      - namespace: wsi
+        labels:
+          app: order
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+    - metadata:
+        name: aws-load-balancer-controller
+        namespace: kube-system
+      wellKnownPolicies:
+        awsLoadBalancerController: true
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["*"]
+
+addons:
+  - name: vpc-cni
+    version: latest
+    attachPolicyARNs:
+      - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+    resolveConflicts: overwrite

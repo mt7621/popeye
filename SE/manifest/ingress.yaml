@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wsi-ingress
+  namespace: wsi
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: wsi-alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/subnets: subnet-0ce7249ff1bad85f7,subnet-032376d8ee971af4b
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/target-type: ip
+
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /v1/product
+        pathType: Prefix
+        backend:
+          service:
+            name: product
+            port:
+              number: 8080
+      - path: /v1/customer
+        pathType: Prefix
+        backend:
+          service:
+            name: customer
+            port:
+              number: 8080
+      - path: /v1/order
+        pathType: Prefix
+        backend:
+          service:
+            name: order
+            port:
+              number: 8080
+
