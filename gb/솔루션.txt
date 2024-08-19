@@ -1,0 +1,32 @@
+1. vpc
+
+2. bastion
+
+3. eks
+
+--내가 할거--
+
+1. s3 비번호 바꾸기
+
+2. terraform 실행
+
+3. bastion ssh port 변경
+
+4. bastion에 필요한거 설치(docker, kubectl, eksctl, helm, mysql)
+
+5. eks cluster 생성
+- order serviceaccount 생성
+- external secret serviceaccount 생성
+- calico 설치
+
+6. ecr image 생성
+
+7. s3 파일 업로드(암호화설정)
+
+8. cloudfront alb 연결(헤더넣기)
+
+9. waf에 alb 연결
+
+10. alb 보안그룹에 cloudfront로 설정
+
+11. 로그 한번씩 띄우기
