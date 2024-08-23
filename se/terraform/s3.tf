@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "ap_s3_bucket" {
-  bucket = "ap-wsi-static-hyun"
+  bucket = "ap-wsi-static-6363"
 
   force_destroy = true
 }
@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "ap_s3_bucket" {
 resource "aws_s3_bucket" "us_s3_bucket" {
   provider = aws.verginia
 
-  bucket = "us-wsi-static-hyun"
+  bucket = "us-wsi-static-6363"
 
   force_destroy = true
 }
