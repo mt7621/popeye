@@ -18,7 +18,7 @@ vpc:
     publicAccess: false
 
 secretsEncryption:
-  keyARN: arn:aws:kms:ap-northeast-2:702661606257:key/01d0a126-c38f-49eb-a98c-c95e3af0b042
+  keyARN: arn:aws:kms:ap-northeast-2:702661606257:alias/eks_cmk
 
 fargateProfiles:
   - name: wsi-app-fargate
