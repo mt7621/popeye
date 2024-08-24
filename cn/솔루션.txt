@@ -1,3 +1,11 @@
+
+!!!!!!!! 채점시 불이익 발생 !!!!!!!!
+EKS생성 후 root user kube auth file 복사
+sudo cp /home/ec2-user/.kube root/.kube -r
+sudo ls -al /root/.kube
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 1. vpc 구성
 
 
