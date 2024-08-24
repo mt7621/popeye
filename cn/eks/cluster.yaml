@@ -10,7 +10,7 @@ iam:
   withOIDC: true
 
 secretsEncryption:
-  keyARN: arn:aws:kms:us-east-1:702661606257:key/27bc952a-af43-4330-ac3d-692c1a15754c
+  keyARN: arn:aws:kms:us-east-1:702661606257:alias/eks_secret_cmk
 
 vpc:
   subnets:

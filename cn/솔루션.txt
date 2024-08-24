@@ -17,7 +17,7 @@ sudo ls -al /root/.kube
 
 4. vpc lattice
 
-- 그냥 ma-vpc만 연결 해놓으면 됨
+- 그냥 ma-vpc만 연결 해놓으면 됨dfs
 
 5. rds
 
